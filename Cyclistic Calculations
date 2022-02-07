@@ -1,0 +1,121 @@
+-- counts rides by customer type
+-- members make up 30% of customers, but account for 55% of the rides
+SELECT 
+    COUNT(ride_id) AS rides,
+    member_casual,
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY member_casual
+ORDER BY rides;
+
+SELECT
+3058643/(2518199+3058643);
+
+-- Looks at most popular time of day
+-- early morning least popular, 5pm most popular
+SELECT 
+    started_at_time,
+    COUNT(ride_id) AS riders_by_time,
+    AVG(ride_length_min) AS avg_ride_length
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY started_at_time
+ORDER BY riders_by_time;
+
+-- Most Popular time of day for casual customers
+-- Early morning least popular, 5pm most popular
+SELECT 
+    started_at_time,
+    COUNT(ride_id) AS riders_by_time,
+    AVG(ride_length_min) AS avg_ride_length,
+    member_casual
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+WHERE member_casual = "casual"
+GROUP BY started_at_time,member_casual
+ORDER BY riders_by_time;
+
+-- Most Popular time of day for members
+-- early morning least popular, 5pm most popular
+SELECT 
+    started_at_time,
+    COUNT(ride_id) AS riders_by_time,
+    AVG(ride_length_min) AS avg_ride_length,
+    member_casual
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+WHERE member_casual = "member"
+GROUP BY started_at_time,member_casual
+ORDER BY riders_by_time;
+
+-- finds average ride length per customer
+-- 27.25 minutes for casual, 13.4 for members
+-- casual members are riding for leisure, members are riding to get where they need to go.
+SELECT 
+    AVG(ride_length_min) AS average_ride_length,
+    member_casual
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY member_casual;
+
+-- Looks at most popular days of the week
+-- least popular day is monday, most popular day saturday(by 130k rides)
+
+SELECT 
+    day_of_week,
+    COUNT(ride_id) AS rides_per_weekday
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY day_of_week
+ORDER BY rides_per_weekday;
+
+-- looks at most popular days of the week for casual riders
+-- least popular is basically a tie between tuesday and wednesday, most popular is saturday(by 75k rides)
+-- weekends are most popular, providing more evidence that casual riders ride for leisure
+
+SELECT 
+    day_of_week,
+    COUNT(ride_id) AS rides_per_weekday,
+    member_casual
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+WHERE member_casual="casual"
+GROUP BY day_of_week,member_casual
+ORDER BY rides_per_weekday;
+
+-- looks at most popular days of the week for members
+-- sunday least popular, wednesday most popular(though not by much, all the weekdays are relatively even)
+-- weekend less popular with members, providing further evidence that members ride to get to work
+SELECT 
+    day_of_week,
+    COUNT(ride_id) AS rides_per_weekday,
+    member_casual
+FROM 
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+WHERE member_casual="member"
+GROUP BY day_of_week,member_casual
+ORDER BY rides_per_weekday;
+
+-- looks at which bike type is preferred by which customer
+-- docked bikes are used the least in general, and there is only one instance of a member using a docked bike.
+-- classic bikes are preferred to electric bikes in general
+SELECT 
+    rideable_type,
+    count(ride_id) AS rides_by_type,
+    member_casual
+FROM
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY rideable_type,member_casual
+ORDER BY rides_by_type;
+
+-- looks at most popular start stations
+-- null is most popular. bikes are mostly picked up; rides usually don't start from a docking station.
+-- next most popular for casual members is start_station_id 13022. For members it is TA1307000039
+SELECT 
+    start_station_id,
+    count(ride_id) AS rides,
+    member_casual
+FROM
+    `nth-skyline-333600.cyclistic_trips_data.new_2021_trips`
+GROUP BY start_station_id,member_casual
+ORDER BY rides;
