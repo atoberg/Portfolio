@@ -1,2 +1,2 @@
 # Portfolio
-Projects showcasing experience and skills in data analysis
+Projects showcasing experience and skills in SQL
