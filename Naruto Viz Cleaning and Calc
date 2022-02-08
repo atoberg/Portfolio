@@ -1,0 +1,70 @@
+-- Created BigQuery dataset `NarutoData` in project `nth-skyline-333600`
+-- Created tables from naruto_ratings_data_v02.csv and naruto.csv
+-- Join tables as temp table, omit and order columns as desired.
+
+WITH naruto_merged AS (SELECT 
+    naruto.Title AS simplified_title,
+    naruto.Type,
+    naruto.Year_launch,
+    naruto.Saga,
+    naruto_ratings_data.*
+FROM `nth-skyline-333600.NarutoData.naruto` naruto
+RIGHT JOIN `nth-skyline-333600.NarutoData.naruto_ratings_data` naruto_ratings_data 
+        ON naruto.Num_episode = naruto_ratings_data.episode_number_overall)
+SELECT
+    episode_number_overall,
+    season,
+    episode_number_in_season,
+    simplified_title,
+    type,
+    saga,
+    directed_by,
+    written_by,
+    year_launch,
+    original_air_date,
+    english_air_date,
+    rating,
+    votes,
+    description,
+FROM 
+    naruto_merged;
+
+-- Saved results as new table called `naruto_merged` to start calculations
+
+-- Checking percentage of filler vs. manga canon
+
+SELECT
+    type,
+    (COUNT(type)/500)*100 AS filler_cannon_percent
+FROM `nth-skyline-333600.NarutoData.naruto_merged`
+GROUP BY type;
+
+-- Checking average ratings by season
+SELECT
+    season,
+    AVG(rating) as averge_rating_by_season
+FROM `nth-skyline-333600.NarutoData.naruto_merged`
+GROUP BY season
+ORDER BY season;
+
+-- Checking average ratings by story arc
+SELECT
+    saga,
+    AVG(rating) as average_rating_by_saga
+FROM `nth-skyline-333600.NarutoData.naruto_merged`
+GROUP BY saga;
+
+-- Checking average rating by director
+SELECT
+    COUNT(directed_by) AS number_of_episodes,
+    directed_by,
+    AVG(rating) as average_rating_by_director
+FROM `nth-skyline-333600.NarutoData.naruto_merged`
+GROUP BY directed_by
+ORDER BY average_rating_by_director DESC;
+
+-- Looking at episode ratings
+SELECT 
+    *
+FROM `nth-skyline-333600.NarutoData.naruto_merged`
+ORDER BY rating DESC;
