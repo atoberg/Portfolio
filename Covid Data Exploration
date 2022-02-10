@@ -159,7 +159,7 @@ WHERE CovidDeaths.continent IS NOT NULL)
 Select*,(vac_over_time/population)*100 as Percent_vaccinated
 FROM Population_vs_vaccination;
 
--- Creating Views to look at later
+-- Creating Views to use later in Tableau
 
 CREATE VIEW `nth-skyline-333600.Portfolio.CovidVacOverTime` AS
 SELECT
@@ -206,8 +206,29 @@ SELECT
 FROM `nth-skyline-333600.Portfolio.CovidDeaths`
 ORDER BY location,date;
 
+CREATE VIEW `nth-skyline-333600.Portfolio.TotalDeathPercentage` AS
+SELECT 
+    SUM(new_cases) AS total_cases,
+    SUM(new_deaths) AS total_deaths,
+    SUM(new_deaths)/SUM(new_cases)*100 as DeathPercentage
+FROM
+    `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL 
+ORDER BY SUM(new_cases);
+
+CREATE VIEW `nth-skyline-333600.Portfolio.InfectedPercentOverTime` AS
+SELECT 
+    location,
+    date,
+    total_cases,
+    population,
+    (total_cases/population)*100 AS percent_cases
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+--WHERE location LIKE '%States%'
+ORDER BY location,date;
+
 -- Trying to look at COVID's spread path by country
--- Since this dataset doesn't show COVID's origin, this information is unuseable
+-- Since this dataset doesn't show COVID's origin, this information isn't very useful
 SELECT
 Location,
 MIN(date) AS CovidFirstArrival
