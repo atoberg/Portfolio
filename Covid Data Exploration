@@ -205,3 +205,17 @@ SELECT
     (total_deaths/total_cases)*100 AS percent_cases_fatal
 FROM `nth-skyline-333600.Portfolio.CovidDeaths`
 ORDER BY location,date;
+
+-- Trying to look at COVID's spread path by country
+-- Since this dataset doesn't show COVID's origin, this information is unuseable
+SELECT
+Location,
+MIN(date) AS CovidFirstArrival
+FROM(Select
+    *
+FROM
+`nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT null AND location NOT LIKE '%ncome%' AND location != 'World')
+WHERE new_cases IS NOT null 
+GROUP BY location
+ORDER BY CovidFirstArrival;
