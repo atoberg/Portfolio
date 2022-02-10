@@ -1,0 +1,207 @@
+-- Initial look at data
+
+SELECT
+    *
+FROM 
+    `nth-skyline-333600.Portfolio.CovidDeaths`
+ORDER BY 
+    location, date;
+
+SELECT
+    *
+FROM 
+    `nth-skyline-333600.Portfolio.CovidVaccinations`
+ORDER BY 
+    location, date;
+
+-- Looking at total cases, new cases, total deaths, population.
+
+SELECT 
+    location,
+    date,
+    total_cases,
+    new_cases,
+    total_deaths,
+    population
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+ORDER BY location, date;
+
+-- Looking at total cases vs total deaths
+-- Shows likelihood of death from COVID in your country
+SELECT 
+    location,
+    date,
+    total_cases,
+    total_deaths,
+    (total_deaths/total_cases)*100 AS percent_cases_fatal
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+ORDER BY location,date;
+
+-- Total cases vs population
+-- Looks at likelihood of contracting COVID in your country
+SELECT 
+    location,
+    date,
+    total_cases,
+    population,
+    (total_cases/population)*100 AS percent_cases
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE location LIKE '%States%'
+ORDER BY location,date;
+
+-- Countries with highest infection rate compared to population
+SELECT 
+    location,
+    MAX(total_cases) AS highest_infection_count,
+    population,
+    MAX((total_cases/population)*100) AS percent_population_infected
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+GROUP BY population,location
+ORDER BY percent_population_infected DESC;
+
+-- Show countries with highest death percentage of population
+
+SELECT 
+    location,
+    MAX(total_deaths) AS highest_death_count,
+    population,
+    MAX((total_deaths/population)*100) AS percent_population_death_count
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+GROUP BY population,location
+ORDER BY percent_population_death_count DESC;
+
+--Shows countries with highest death count
+SELECT 
+    location,
+    MAX(total_deaths) AS highest_death_count,
+
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL
+GROUP BY location
+ORDER BY highest_death_count DESC;
+
+-- By continent
+
+SELECT 
+    location,
+    MAX(total_deaths) AS highest_death_count,
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NULL AND location not like '%ncome%' AND location NOT LIKE'%World%'
+GROUP BY location
+ORDER BY highest_death_count DESC;
+
+-- Death Percentage across the world
+
+SELECT 
+    date,
+    SUM(new_cases) AS total_cases,
+    SUM(new_deaths) AS total_deaths,
+    SUM(new_deaths)/SUM(new_cases)*100 as DeathPercentage
+FROM
+    `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL 
+GROUP BY date
+ORDER BY date, SUM(new_cases);
+
+SELECT 
+    SUM(new_cases) AS total_cases,
+    SUM(new_deaths) AS total_deaths,
+    SUM(new_deaths)/SUM(new_cases)*100 as DeathPercentage
+FROM
+    `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL 
+ORDER BY SUM(new_cases);
+
+-- Joining tables
+-- Looking at total population vs vaccinations
+SELECT
+    CovidDeaths.continent,
+    CovidDeaths.location,
+    CovidDeaths.date,
+    CovidDeaths.population,
+    CovidVaccinations.new_vaccinations
+FROM `nth-skyline-333600.Portfolio.CovidDeaths` CovidDeaths
+JOIN `nth-skyline-333600.Portfolio.CovidVaccinations` CovidVaccinations
+ON CovidDeaths.location = CovidVaccinations.location
+AND CovidDeaths.date = CovidVaccinations.date
+WHERE CovidDeaths.continent IS NOT NULL
+ORDER BY location,date;
+
+-- Looking at at how Vaccinations grow over time by country
+
+SELECT
+    CovidDeaths.continent,
+    CovidDeaths.location,
+    CovidDeaths.date,
+    CovidDeaths.population,
+    CovidVaccinations.new_vaccinations,
+    SUM(CovidVaccinations.new_vaccinations) OVER (PARTITION BY CovidDeaths.location ORDER BY CovidDeaths.location, CovidDeaths.date) AS vac_over_time
+FROM `nth-skyline-333600.Portfolio.CovidDeaths` CovidDeaths
+JOIN `nth-skyline-333600.Portfolio.CovidVaccinations` CovidVaccinations
+ON CovidDeaths.location = CovidVaccinations.location
+AND CovidDeaths.date = CovidVaccinations.date
+WHERE CovidDeaths.continent IS NOT NULL
+ORDER BY location,date;
+
+-- Use CTE
+WITH Population_vs_vaccination AS (SELECT
+    CovidDeaths.continent,
+    CovidDeaths.location,
+    CovidDeaths.date,
+    CovidDeaths.population,
+    CovidVaccinations.new_vaccinations,
+    SUM(CovidVaccinations.new_vaccinations) OVER (PARTITION BY CovidDeaths.location ORDER BY CovidDeaths.location, CovidDeaths.date) AS vac_over_time
+FROM `nth-skyline-333600.Portfolio.CovidDeaths` CovidDeaths
+JOIN `nth-skyline-333600.Portfolio.CovidVaccinations` CovidVaccinations
+ON CovidDeaths.location = CovidVaccinations.location
+AND CovidDeaths.date = CovidVaccinations.date
+WHERE CovidDeaths.continent IS NOT NULL)
+Select*,(vac_over_time/population)*100 as Percent_vaccinated
+FROM Population_vs_vaccination;
+
+-- Creating Views to look at later
+
+CREATE VIEW `nth-skyline-333600.Portfolio.CovidVacOverTime` AS
+SELECT
+    CovidDeaths.continent,
+    CovidDeaths.location,
+    CovidDeaths.date,
+    CovidDeaths.population,
+    CovidVaccinations.new_vaccinations,
+    SUM(CovidVaccinations.new_vaccinations) OVER (PARTITION BY CovidDeaths.location ORDER BY CovidDeaths.location, CovidDeaths.date) AS vac_over_time
+FROM `nth-skyline-333600.Portfolio.CovidDeaths` CovidDeaths
+JOIN `nth-skyline-333600.Portfolio.CovidVaccinations` CovidVaccinations
+ON CovidDeaths.location = CovidVaccinations.location
+AND CovidDeaths.date = CovidVaccinations.date
+WHERE CovidDeaths.continent IS NOT NULL
+ORDER BY location,date;
+
+CREATE VIEW `nth-skyline-333600.Portfolio.DeathsByCountry` AS
+SELECT 
+    location,
+    MAX(total_deaths) AS highest_death_count,
+
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL
+GROUP BY location
+ORDER BY highest_death_count DESC;
+
+CREATE VIEW `nth-skyline-333600.Portfolio.CasesByCountry` AS
+SELECT 
+    location,
+    MAX(total_cases) AS highest_case_count,
+
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+WHERE continent IS NOT NULL
+GROUP BY location
+ORDER BY highest_case_count DESC;
+
+CREATE VIEW `nth-skyline-333600.Portfolio.LethalityByCountry` AS
+SELECT 
+    location,
+    date,
+    total_cases,
+    total_deaths,
+    (total_deaths/total_cases)*100 AS percent_cases_fatal
+FROM `nth-skyline-333600.Portfolio.CovidDeaths`
+ORDER BY location,date;
