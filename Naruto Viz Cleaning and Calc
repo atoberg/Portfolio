@@ -1,6 +1,6 @@
 -- Created BigQuery dataset `NarutoData` in project `nth-skyline-333600`
 -- Created tables from naruto_ratings_data_v02.csv and naruto.csv
--- Join tables as temp table, omit and order columns as desired.
+-- Join tables, omit and order columns as desired.
 
 WITH naruto_merged AS (SELECT 
     naruto.Title AS simplified_title,
